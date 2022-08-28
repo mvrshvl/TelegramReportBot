@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"TelegramBot/core/database"
 	"TelegramBot/core/stack"
 	"gopkg.in/telebot.v3"
 )
@@ -37,11 +38,11 @@ func cityCallback(ctx telebot.Context, stack *stack.Stack, city string) error {
 func translate(city string) string {
 	switch city {
 	case VlgCommand:
-		return VlgName
+		return database.TableVLG
 	case KrdCommand:
-		return KrdName
+		return database.TableKRD
 	case MskCommand:
-		return MskName
+		return database.TableKRD
 	default:
 		return city
 	}

@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"TelegramBot/config"
+	"TelegramBot/core/database"
 	"TelegramBot/core/stack"
 	"TelegramBot/tgerror"
 	"fmt"
+	scribble "github.com/nanobox-io/golang-scribble"
 	"gopkg.in/telebot.v3"
 	"log"
 	"strconv"
@@ -17,21 +19,21 @@ const (
 	fmtMsgErr = "Произошла ошибка (%s), начните сначала"
 )
 
-func NewPhotoSend(stack *stack.Stack, api *telebot.Bot, cfg *config.Config) *HandlerBase {
+func NewPhotoSend(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) *HandlerBase {
 	return &HandlerBase{
 		name:     telebot.OnPhoto,
-		callback: sendCallback(stack, api, cfg),
+		callback: sendCallback(stack, db, api, cfg),
 	}
 }
 
-func NewTextSend(stack *stack.Stack, api *telebot.Bot, cfg *config.Config) *HandlerBase {
+func NewTextSend(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) *HandlerBase {
 	return &HandlerBase{
 		name:     telebot.OnText,
-		callback: sendCallback(stack, api, cfg),
+		callback: sendCallback(stack, db, api, cfg),
 	}
 }
 
-func sendCallback(stack *stack.Stack, api *telebot.Bot, cfg *config.Config) func(ctx telebot.Context) error {
+func sendCallback(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		query, ok := stack.Get(ctx.Message().Chat.ID)
 
@@ -54,6 +56,24 @@ func sendCallback(stack *stack.Stack, api *telebot.Bot, cfg *config.Config) func
 		_, err = api.Forward(chatID, ctx.Message())
 		if err != nil {
 			log.Println("send picture error:", err)
+			return reset(ctx, fmt.Sprintf(fmtMsgErr, err.Error()), stack)
+		}
+
+		var fileID string
+
+		if ctx.Message().Media() != nil {
+			fileID = ctx.Message().Media().MediaFile().FileID
+		}
+
+		err = db.Write(query.City, fmt.Sprintf("%s-%d", query.Place, ctx.Message().ID), database.Message{
+			Timestamp: ctx.Message().Time(),
+			Text:      ctx.Message().Text,
+			Media:     fileID,
+			Place:     query.Place,
+			From:      ctx.Message().Sender.Username,
+		})
+		if err != nil {
+			log.Println("save message error:", err)
 			return reset(ctx, fmt.Sprintf(fmtMsgErr, err.Error()), stack)
 		}
 

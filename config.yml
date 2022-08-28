@@ -6,7 +6,7 @@ key: "pub_keys.pem"
 login: admin
 password: admin
 channels:
-  Волгоград:
+  volgograd:
       Охрана:
         id: "-1001675961636"
         link: "https://t.me/+IbKT55gmFFY3Mjli"
@@ -19,7 +19,7 @@ channels:
       Админ:
         id: "-1001699370600"
         link: "https://t.me/+sCjHoRiemWNlOTVi"
-  Москва:
+  moscow:
       Охрана:
         id: "-1001697572469"
         link: "https://t.me/+lCSB8ONa-_A5MjBi"
@@ -32,7 +32,7 @@ channels:
       Админ:
         id: "-1001579885451"
         link: "https://t.me/+csVBWNTtOio1Yzgy"
-  Краснодар:
+  krasnodar:
       Охрана:
         id: "-1001633711454"
         link: "https://t.me/+RefSzW2YfyRiM2Qy"
