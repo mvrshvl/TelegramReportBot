@@ -7,7 +7,13 @@ import (
 )
 
 type Config struct {
-	Token    string
+	Token    string                        `yaml:"token"`
+	AppID    int                           `yaml:"app_id"`
+	AppHash  string                        `yaml:"app_hash"`
+	Server   string                        `yaml:"server"`
+	Key      string                        `yaml:"key"`
+	Login    string                        `yaml:"login"`
+	Password string                        `yaml:"password"`
 	Channels map[string]map[string]Channel `yaml:"channels"`
 }
 

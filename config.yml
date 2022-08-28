@@ -1,4 +1,10 @@
 token: "5440030440:AAGiPBn9JHb7VW60aRhf5S6HUqw6V8eEVgI"
+app_id: 10550974
+app_hash: "698997f261777bbfb3bf91db82641034"
+server: "149.154.167.50:443"
+key: "pub_keys.pem"
+login: admin
+password: admin
 channels:
   Волгоград:
       Охрана:

@@ -17,5 +17,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	server := core.New(8090, tgbot.API)
+	go server.Run(cfg)
+
 	tgbot.Run()
 }

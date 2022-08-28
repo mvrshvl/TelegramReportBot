@@ -9,7 +9,7 @@ import (
 )
 
 type Bot struct {
-	api *telebot.Bot
+	API *telebot.Bot
 }
 
 func NewBot(cfg *config.Config) (*Bot, error) {
@@ -32,13 +32,68 @@ func NewBot(cfg *config.Config) (*Bot, error) {
 		return nil, fmt.Errorf("set commands: %w", err)
 	}
 
+	//_, err = telegram.NewClient(telegram.ClientConfig{
+	//	// where to store session configuration. must be set
+	//	SessionFile: "storage/session.json",
+	//	// host address of mtproto server. Actually, it can be any mtproxy, not only official
+	//	ServerHost: cfg.Server,
+	//	// public keys file is path to file with public keys, which you must get from https://my.telegram.org
+	//	PublicKeysFile:  cfg.Key,
+	//	AppID:           cfg.AppID,   // app id, could be find at https://my.telegram.org
+	//	AppHash:         cfg.AppHash, // app hash, could be find at https://my.telegram.org
+	//	InitWarnChannel: true,        // if we want to get errors, otherwise, client.Warnings will be set nil
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//_, err = client.AuthSendCode("89020976661", int32(cfg.AppID), cfg.AppHash, &telegram.CodeSettings{})
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//auth, err := client.AuthSignIn(
+	//	phoneNumber,
+	//	setCode.PhoneCodeHash,
+	//	code,
+	//)
+	//
+	//_, err = client.AuthImportBotAuthorization(1, int32(cfg.AppID), cfg.AppHash, cfg.Token)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//chat, err := client.GetChatInfoByHashLink(cfg.Channels["Волгоград"]["Охрана"].Link)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//channelSimpleData, ok := chat.(*telegram.Channel)
+	//if !ok {
+	//	return nil, fmt.Errorf("not a chan")
+	//}
+	//
+	//msgs, err := client.MessagesGetHistory(&telegram.MessagesGetHistoryParams{
+	//	Peer:       &telegram.InputPeerChannel{ChannelID: channelSimpleData.ID, AccessHash: channelSimpleData.AccessHash},
+	//	OffsetID:   0,
+	//	OffsetDate: 0,
+	//	AddOffset:  0,
+	//	Limit:      math.MaxInt32,
+	//	MaxID:      math.MaxInt32,
+	//	MinID:      0,
+	//	Hash:       0,
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
+
 	return &Bot{
-		api: api,
+		API: api,
 	}, nil
 }
 
 func (bot *Bot) Run() {
-	bot.api.Start()
+	bot.API.Start()
 }
 
 func createHandlers(stack *stack.Stack, api *telebot.Bot, cfg *config.Config) []*handlers2.HandlerBase {
