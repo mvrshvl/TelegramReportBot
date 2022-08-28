@@ -25,7 +25,7 @@ func main() {
 	}
 
 	server := core.New(8090, db)
-	go server.Run(cfg, tgbot.API)
+	go server.Run(cfg)
 
 	tgbot.Run()
 }

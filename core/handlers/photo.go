@@ -59,16 +59,27 @@ func sendCallback(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg
 			return reset(ctx, fmt.Sprintf(fmtMsgErr, err.Error()), stack)
 		}
 
-		var fileID string
+		var filepath, text string
 
 		if ctx.Message().Media() != nil {
-			fileID = ctx.Message().Media().MediaFile().FileID
+			file, err := api.FileByID(ctx.Message().Media().MediaFile().FileID)
+			if err != nil {
+				log.Println("get file by id error:", err)
+				return reset(ctx, fmt.Sprintf(fmtMsgErr, err.Error()), stack)
+			}
+
+			filepath = file.FilePath
+			text = ctx.Message().Caption
+		}
+
+		if len(ctx.Message().Text) != 0 {
+			text = ctx.Message().Text
 		}
 
 		err = db.Write(query.City, fmt.Sprintf("%s-%d", query.Place, ctx.Message().ID), database.Message{
 			Timestamp: ctx.Message().Time(),
-			Text:      ctx.Message().Text,
-			Media:     fileID,
+			Text:      text,
+			Media:     filepath,
 			Place:     query.Place,
 			From:      ctx.Message().Sender.Username,
 		})

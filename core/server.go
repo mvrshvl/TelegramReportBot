@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	scribble "github.com/nanobox-io/golang-scribble"
 	"github.com/xelaj/mtproto/telegram"
-	"gopkg.in/telebot.v3"
 	"log"
 	"net/http"
 )
@@ -35,13 +34,23 @@ func New(port uint32, db *scribble.Driver) *Server {
 	}
 }
 
-func (s *Server) Run(cfg *config.Config, api *telebot.Bot) {
+func (s *Server) Run(cfg *config.Config) {
 	engine := gin.Default()
 
 	engine.Use(sessions.Sessions("mysession", sessions.NewCookieStore(secret)))
 
 	private := engine.Group("/")
-	private.Use(s.AuthRequired(cfg))
+	private.Use(func(context *gin.Context) {
+		session := sessions.Default(context)
+		user := session.Get(userkey)
+		if user == nil {
+			context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(login))
+			context.Abort()
+			return
+		}
+
+		context.Next()
+	})
 
 	private.GET("/", func(context *gin.Context) {
 		context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(cities))
@@ -69,7 +78,7 @@ func (s *Server) Run(cfg *config.Config, api *telebot.Bot) {
 	})
 
 	private.GET("/volgograd", func(context *gin.Context) {
-		reports, err := s.getReports(database.TableVLG, cfg.Token, api)
+		reports, err := s.getReports(database.TableVLG, cfg.Token)
 		if err != nil {
 			context.String(http.StatusInternalServerError, err.Error())
 			log.Println(err.Error())
@@ -80,7 +89,7 @@ func (s *Server) Run(cfg *config.Config, api *telebot.Bot) {
 	})
 
 	private.GET("/krasnodar", func(context *gin.Context) {
-		reports, err := s.getReports(database.TableKRD, cfg.Token, api)
+		reports, err := s.getReports(database.TableKRD, cfg.Token)
 		if err != nil {
 			context.String(http.StatusInternalServerError, err.Error())
 			log.Println(err.Error())
@@ -91,7 +100,7 @@ func (s *Server) Run(cfg *config.Config, api *telebot.Bot) {
 	})
 
 	private.GET("/moscow", func(context *gin.Context) {
-		reports, err := s.getReports(database.TableMSK, cfg.Token, api)
+		reports, err := s.getReports(database.TableMSK, cfg.Token)
 		if err != nil {
 			context.String(http.StatusInternalServerError, err.Error())
 			log.Println(err.Error())
@@ -139,23 +148,7 @@ func (s *Server) connectApp(cfg *config.Config) error {
 	return err
 }
 
-func (s *Server) AuthRequired(cfg *config.Config) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		user := session.Get(userkey)
-		if user == nil {
-			// Abort the request with the appropriate error code
-			c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(login))
-			c.Abort()
-			return
-		}
-
-		// Continue down the chain to handler etc
-		c.Next()
-	}
-}
-
-func (s *Server) getReports(table string, token string, api *telebot.Bot) ([]byte, error) {
+func (s *Server) getReports(table string, token string) ([]byte, error) {
 	records, err := s.db.ReadAll(table)
 	if err != nil {
 		return nil, ErrNoReports
@@ -173,12 +166,7 @@ func (s *Server) getReports(table string, token string, api *telebot.Bot) ([]byt
 
 		var media string
 		if len(record.Media) != 0 {
-			file, err := api.FileByID(record.Media)
-			if err != nil {
-				return nil, err
-			}
-
-			media = fmt.Sprintf(fmtMedia, fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", token, file.FilePath))
+			media = fmt.Sprintf(fmtMedia, fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", token, record.Media))
 		}
 
 		var text string

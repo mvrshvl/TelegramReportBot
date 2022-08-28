@@ -20,13 +20,6 @@ func (h *HandlerBase) Handle(ctx telebot.Context) error {
 var CityMenu = telebot.ReplyMarkup{
 	OneTimeKeyboard: false,
 	RemoveKeyboard:  true,
-	//ReplyKeyboard: [][]telebot.ReplyButton{
-	//	{
-	//		telebot.ReplyButton{Text: "Волгоград"},
-	//		telebot.ReplyButton{Text: "Москва"},
-	//		telebot.ReplyButton{Text: "Краснодар"},
-	//	},
-	//},
 }
 
 var PlaceMenu = telebot.ReplyMarkup{

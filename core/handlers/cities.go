@@ -42,7 +42,7 @@ func translate(city string) string {
 	case KrdCommand:
 		return database.TableKRD
 	case MskCommand:
-		return database.TableKRD
+		return database.TableMSK
 	default:
 		return city
 	}
