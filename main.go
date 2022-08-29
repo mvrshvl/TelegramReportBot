@@ -19,6 +19,22 @@ func main() {
 		fmt.Println(file.Name())
 	}
 
+	files, err = os.ReadDir("./go")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		fmt.Println(file.Name())
+	}
+
+	files, err = os.ReadDir("/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		fmt.Println(file.Name())
+	}
+
 	cfg, err := config.New("./config.yml")
 	if err != nil {
 		log.Fatal(err)
