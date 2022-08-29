@@ -3,12 +3,22 @@ package main
 import (
 	"TelegramBot/config"
 	"TelegramBot/core"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/nanobox-io/golang-scribble"
 )
 
 func main() {
+	files, err := os.ReadDir(".")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		fmt.Println(file.Name())
+	}
+
 	cfg, err := config.New("./config.yml")
 	if err != nil {
 		log.Fatal(err)
