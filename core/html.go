@@ -32,7 +32,10 @@ const (
   </div>
 </div>`
 
-	fmtReportBody = `<div class="form_auth_block">%s</div>`
+	fmtReportBody = `<div class="form_auth_block">%s
+					</div>`
+
+	fmtLoadReport = `<a href="%s?from=%d&to=%d">Загрузить %s</a>`
 
 	fmtMedia = `        <div class="image">
             <img src="%s" />

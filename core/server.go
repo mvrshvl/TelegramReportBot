@@ -12,6 +12,8 @@ import (
 	"github.com/xelaj/mtproto/telegram"
 	"log"
 	"net/http"
+	"sort"
+	"strconv"
 )
 
 const (
@@ -78,7 +80,7 @@ func (s *Server) Run(cfg *config.Config) {
 	})
 
 	private.GET("/volgograd", func(context *gin.Context) {
-		reports, err := s.getReports(database.TableVLG, cfg.Token)
+		reports, err := s.getReports(context, database.TableVLG, cfg.Token)
 		if err != nil {
 			context.String(http.StatusInternalServerError, err.Error())
 			log.Println(err.Error())
@@ -89,7 +91,7 @@ func (s *Server) Run(cfg *config.Config) {
 	})
 
 	private.GET("/krasnodar", func(context *gin.Context) {
-		reports, err := s.getReports(database.TableKRD, cfg.Token)
+		reports, err := s.getReports(context, database.TableKRD, cfg.Token)
 		if err != nil {
 			context.String(http.StatusInternalServerError, err.Error())
 			log.Println(err.Error())
@@ -100,7 +102,7 @@ func (s *Server) Run(cfg *config.Config) {
 	})
 
 	private.GET("/moscow", func(context *gin.Context) {
-		reports, err := s.getReports(database.TableMSK, cfg.Token)
+		reports, err := s.getReports(context, database.TableMSK, cfg.Token)
 		if err != nil {
 			context.String(http.StatusInternalServerError, err.Error())
 			log.Println(err.Error())
@@ -148,15 +150,42 @@ func (s *Server) connectApp(cfg *config.Config) error {
 	return err
 }
 
-func (s *Server) getReports(table string, token string) ([]byte, error) {
+func (s *Server) getReports(context *gin.Context, table string, token string) ([]byte, error) {
 	records, err := s.db.ReadAll(table)
 	if err != nil {
 		return nil, ErrNoReports
 	}
 
+	recordsReverse := sort.Reverse(sort.StringSlice(records))
+	fmt.Println(recordsReverse)
+
 	var recordsHTML string
 
-	for _, recordJSON := range records {
+	from := 0
+	to := 100
+
+	minString := context.Query("from")
+	maxString := context.Query("to")
+
+	if len(minString) != 0 {
+		fromQuery, err := strconv.Atoi(minString)
+		if err == nil {
+			from = fromQuery
+		}
+	}
+
+	if len(maxString) != 0 {
+		toQuery, err := strconv.Atoi(maxString)
+		if err == nil {
+			to = toQuery
+		}
+	}
+
+	countRecords := len(records)
+
+	from, to = validateRange(from, to, countRecords)
+
+	for _, recordJSON := range records[from:to] {
 		var record *database.Message
 
 		err = json.Unmarshal([]byte(recordJSON), &record)
@@ -177,5 +206,59 @@ func (s *Server) getReports(table string, token string) ([]byte, error) {
 		recordsHTML += fmt.Sprintf(fmtReport, record.Place, record.From, record.Timestamp.String(), media+text)
 	}
 
+	switch {
+	case from == 0 && countRecords <= to:
+		return []byte(fmt.Sprintf(fmtReportBody, recordsHTML)), nil
+	case from == 0 && countRecords > to:
+		oldFrom, oldTo := getRange(from, countRecords, 100)
+		return []byte(fmt.Sprintf(fmtReportBody, recordsHTML+fmt.Sprintf(fmtLoadReport, fmt.Sprintf("/%s", table), oldFrom, oldTo, "старее"))), nil
+	case from > 0 && countRecords <= to:
+		newFrom, newTo := getRange(from, countRecords, -100)
+		return []byte(fmt.Sprintf(fmtReportBody, fmt.Sprintf(fmtLoadReport, fmt.Sprintf("/%s", table), newFrom, newTo, "новее")+recordsHTML)), nil
+	case from > 0 && countRecords > to:
+		newFrom, newTo := getRange(from, countRecords, -100)
+		oldFrom, oldTo := getRange(from, countRecords, 100)
+
+		return []byte(fmt.Sprintf(fmtReportBody, fmt.Sprintf(fmtLoadReport, fmt.Sprintf("/%s", table), newFrom, newTo, "новее")+recordsHTML+fmt.Sprintf(fmtLoadReport, fmt.Sprintf("/%s", table), oldFrom, oldTo, "старее"))), nil
+	}
+
 	return []byte(fmt.Sprintf(fmtReportBody, recordsHTML)), nil
+}
+
+func getRange(from, max, step int) (int, int) {
+	newFrom := from + step
+	if newFrom < 0 {
+		newFrom = 0
+	}
+
+	newTo := newFrom + 100
+	if newTo > max {
+		newTo = max
+	}
+
+	return newFrom, newTo
+}
+
+func validateRange(from, to, max int) (int, int) {
+	if from < 0 {
+		from = 0
+	}
+
+	if to < 0 {
+		to = from + 100
+	}
+
+	if to > max {
+		to = max
+	}
+
+	if from > to {
+		if to-100 > 0 {
+			from = to - 100
+		} else {
+			from = 0
+		}
+	}
+
+	return from, to
 }
