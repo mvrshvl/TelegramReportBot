@@ -24,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := core.New(4444, db)
+	server := core.New(8090, db)
 	go server.Run(cfg)
 
 	tgbot.Run()
