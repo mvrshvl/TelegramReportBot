@@ -135,21 +135,6 @@ func (s *Server) Run(cfg *config.Config) {
 	}
 }
 
-func (s *Server) connectApp(cfg *config.Config) error {
-	client, err := telegram.NewClient(telegram.ClientConfig{
-		SessionFile:     "storage/session.json",
-		ServerHost:      cfg.Server,
-		PublicKeysFile:  cfg.Key,
-		AppID:           cfg.AppID,
-		AppHash:         cfg.AppHash,
-		InitWarnChannel: true,
-	})
-
-	s.client = client
-
-	return err
-}
-
 func (s *Server) getReports(context *gin.Context, table string, token string) ([]byte, error) {
 	records, err := s.db.ReadAll(table)
 	if err != nil {
