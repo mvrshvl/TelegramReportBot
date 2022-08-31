@@ -71,7 +71,6 @@ func (db *Database) connect(ctx context.Context, cfg *config.Database, dsn strin
 
 func (db *Database) Read(ctx context.Context, city string) ([]*Message, error) {
 	db.mux.RLock()
-	defer db.mux.RUnlock()
 
 	query := `SELECT * FROM messages
 				WHERE city = ?
@@ -79,6 +78,9 @@ func (db *Database) Read(ctx context.Context, city string) ([]*Message, error) {
 
 	rows, err := db.connection.QueryContext(ctx, query, city)
 	if err != nil {
+		fmt.Println(err)
+
+		db.mux.RUnlock()
 		db.reconnect()
 		return nil, fmt.Errorf("can't get accounts: %w", err)
 	}
@@ -100,6 +102,7 @@ func (db *Database) Read(ctx context.Context, city string) ([]*Message, error) {
 			&message.Timestamp,
 		)
 		if err != nil {
+			db.mux.RUnlock()
 			db.reconnect()
 			return nil, err
 		}
@@ -107,20 +110,24 @@ func (db *Database) Read(ctx context.Context, city string) ([]*Message, error) {
 		messages = append(messages, &message)
 	}
 
+	db.mux.RUnlock()
 	return messages, nil
 }
 
 func (db *Database) Insert(msg *Message) error {
 	db.mux.Lock()
-	defer db.mux.Unlock()
 
 	query := `INSERT INTO MESSAGES (city, text, media, place, from, timestamp) VALUES (?, ?, ?, ?, ?, ?)`
 
 	_, err := db.connection.Exec(query, msg.City, msg.Text, msg.Media, msg.Place, msg.From, msg.Timestamp)
 	if err != nil {
+		fmt.Println(err)
+		db.mux.Unlock()
 		db.reconnect()
 		return fmt.Errorf("can't insert message: %w", err)
 	}
+
+	db.mux.Unlock()
 
 	return nil
 }
