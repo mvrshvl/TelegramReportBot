@@ -55,6 +55,10 @@ func (s *Server) Run(cfg *config.Config) {
 		context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(cities))
 	})
 
+	private.POST("/login", func(context *gin.Context) {
+		context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(cities))
+	})
+
 	engine.POST("/", func(context *gin.Context) {
 		session := sessions.Default(context)
 
@@ -124,7 +128,7 @@ func (s *Server) Run(cfg *config.Config) {
 			return
 		}
 
-		context.Redirect(http.StatusTemporaryRedirect, "/")
+		context.Redirect(http.StatusTemporaryRedirect, "/login")
 	})
 
 	err := engine.Run(fmt.Sprintf(":%d", s.port))
