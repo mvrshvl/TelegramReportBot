@@ -55,6 +55,10 @@ func (s *Server) Run(cfg *config.Config) {
 		context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(cities))
 	})
 
+	private.GET("/login", func(context *gin.Context) {
+		context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(cities))
+	})
+
 	private.POST("/login", func(context *gin.Context) {
 		context.Data(http.StatusOK, "text/html; charset=utf-8", []byte(cities))
 	})
