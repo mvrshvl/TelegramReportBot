@@ -4,18 +4,12 @@ import (
 	"TelegramBot/config"
 	"TelegramBot/core/database"
 	"TelegramBot/tgerror"
-	"archive/zip"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
-	scribble "github.com/nanobox-io/golang-scribble"
 	"github.com/xelaj/mtproto/telegram"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"sort"
 	"strconv"
 )
 
@@ -29,10 +23,10 @@ var secret = []byte("secret")
 type Server struct {
 	port   uint32
 	client *telegram.Client
-	db     *scribble.Driver
+	db     *database.Database
 }
 
-func New(port uint32, db *scribble.Driver) *Server {
+func New(port uint32, db *database.Database) *Server {
 	return &Server{
 		port: port,
 		db:   db,
@@ -133,15 +127,6 @@ func (s *Server) Run(cfg *config.Config) {
 		context.Redirect(http.StatusTemporaryRedirect, "/")
 	})
 
-	private.GET("/download", func(context *gin.Context) {
-		err := Backup()
-		if err != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		context.File("backup.zip")
-	})
 	err := engine.Run(fmt.Sprintf(":%d", s.port))
 	if err != nil {
 		log.Println(err)
@@ -149,13 +134,10 @@ func (s *Server) Run(cfg *config.Config) {
 }
 
 func (s *Server) getReports(context *gin.Context, table string, token string) ([]byte, error) {
-	records, err := s.db.ReadAll(table)
+	records, err := s.db.Read(context, table)
 	if err != nil {
 		return nil, ErrNoReports
 	}
-
-	recordsReverse := sort.Reverse(sort.StringSlice(records))
-	fmt.Println(recordsReverse)
 
 	var recordsHTML string
 
@@ -183,15 +165,7 @@ func (s *Server) getReports(context *gin.Context, table string, token string) ([
 
 	from, to = validateRange(from, to, countRecords)
 
-	for _, recordJSON := range records[from:to] {
-		var record *database.Message
-
-		err = json.Unmarshal([]byte(recordJSON), &record)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
+	for _, record := range records[from:to] {
 		var media string
 		if len(record.Media) != 0 {
 			media = fmt.Sprintf(fmtMedia, fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", token, record.Media))
@@ -260,66 +234,4 @@ func validateRange(from, to, max int) (int, int) {
 	}
 
 	return from, to
-}
-
-func Backup() error {
-	outFile, err := os.Create(`backup.zip`)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	zipWriter := zip.NewWriter(outFile)
-
-	err = addFiles(zipWriter, "./telegram/", "telegram/")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = zipWriter.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return nil
-}
-
-func addFiles(w *zip.Writer, basePath, baseInZip string) error {
-	files, err := ioutil.ReadDir(basePath)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		fmt.Println(basePath + file.Name())
-		if !file.IsDir() {
-			dat, err := ioutil.ReadFile(basePath + file.Name())
-			if err != nil {
-				return err
-			}
-
-			// Add some files to the archive.
-			f, err := w.Create(baseInZip + file.Name())
-			if err != nil {
-				return err
-			}
-			_, err = f.Write(dat)
-			if err != nil {
-				return err
-			}
-		} else if file.IsDir() {
-
-			// Recurse
-			newBase := basePath + file.Name() + "/"
-			fmt.Println("Recursing and Adding SubDir: " + file.Name())
-			fmt.Println("Recursing and Adding SubDir: " + newBase)
-
-			err = addFiles(w, newBase, baseInZip+file.Name()+"/")
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

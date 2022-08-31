@@ -2,10 +2,10 @@ package core
 
 import (
 	"TelegramBot/config"
+	"TelegramBot/core/database"
 	handlers2 "TelegramBot/core/handlers"
 	"TelegramBot/core/stack"
 	"fmt"
-	scribble "github.com/nanobox-io/golang-scribble"
 	"gopkg.in/telebot.v3"
 )
 
@@ -13,7 +13,7 @@ type Bot struct {
 	API *telebot.Bot
 }
 
-func NewBot(cfg *config.Config, db *scribble.Driver) (*Bot, error) {
+func NewBot(cfg *config.Config, db *database.Database) (*Bot, error) {
 	api, err := telebot.NewBot(telebot.Settings{
 		Token:   cfg.Token,
 		Updates: 60,
@@ -42,7 +42,7 @@ func (bot *Bot) Run() {
 	bot.API.Start()
 }
 
-func createHandlers(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) []*handlers2.HandlerBase {
+func createHandlers(stack *stack.Stack, db *database.Database, api *telebot.Bot, cfg *config.Config) []*handlers2.HandlerBase {
 	return []*handlers2.HandlerBase{
 		handlers2.NewCity(stack, handlers2.VlgName),
 		handlers2.NewCity(stack, handlers2.MskName),

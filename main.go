@@ -1,19 +1,28 @@
 package main
 
 import (
+	"context"
+	"log"
+
+	_ "github.com/go-sql-driver/mysql"
+
 	"TelegramBot/config"
 	"TelegramBot/core"
-	"github.com/nanobox-io/golang-scribble"
-	"log"
+	"TelegramBot/core/database"
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	db, err := scribble.New("./telegram", nil)
+	db := database.New(cfg)
+
+	err = db.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -6,7 +6,6 @@ import (
 	"TelegramBot/core/stack"
 	"TelegramBot/tgerror"
 	"fmt"
-	scribble "github.com/nanobox-io/golang-scribble"
 	"gopkg.in/telebot.v3"
 	"log"
 	"strconv"
@@ -19,21 +18,21 @@ const (
 	fmtMsgErr = "Произошла ошибка (%s), начните сначала"
 )
 
-func NewPhotoSend(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) *HandlerBase {
+func NewPhotoSend(stack *stack.Stack, db *database.Database, api *telebot.Bot, cfg *config.Config) *HandlerBase {
 	return &HandlerBase{
 		name:     telebot.OnPhoto,
 		callback: sendCallback(stack, db, api, cfg),
 	}
 }
 
-func NewTextSend(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) *HandlerBase {
+func NewTextSend(stack *stack.Stack, db *database.Database, api *telebot.Bot, cfg *config.Config) *HandlerBase {
 	return &HandlerBase{
 		name:     telebot.OnText,
 		callback: sendCallback(stack, db, api, cfg),
 	}
 }
 
-func sendCallback(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg *config.Config) func(ctx telebot.Context) error {
+func sendCallback(stack *stack.Stack, db *database.Database, api *telebot.Bot, cfg *config.Config) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		query, ok := stack.Get(ctx.Message().Chat.ID)
 
@@ -76,7 +75,8 @@ func sendCallback(stack *stack.Stack, db *scribble.Driver, api *telebot.Bot, cfg
 			text = ctx.Message().Text
 		}
 
-		err = db.Write(query.City, fmt.Sprintf("%s-%d", query.Place, ctx.Message().ID), database.Message{
+		err = db.Insert(&database.Message{
+			City:      query.City,
 			Timestamp: ctx.Message().Time(),
 			Text:      text,
 			Media:     filepath,
