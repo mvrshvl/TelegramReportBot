@@ -3,6 +3,7 @@ package database
 import (
 	"TelegramBot/config"
 	"context"
+	"database/sql"
 	"embed"
 	"fmt"
 	"github.com/jmoiron/sqlx"
@@ -110,7 +111,12 @@ func (db *Database) Read(ctx context.Context, city string) ([]*Message, error) {
 		messages = append(messages, &message)
 	}
 
+	if len(messages) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
 	db.mux.RUnlock()
+
 	return messages, nil
 }
 

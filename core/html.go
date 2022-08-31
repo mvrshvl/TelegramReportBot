@@ -45,7 +45,7 @@ const (
 			<p>%s</p>
         </div>`
 	fmtReport = `<article class="grid-item">
-			<h3>Чат: %s, От: @%s, Время: %s</h3>
+			<h3>Чат: %s, От: %s, Время: %s</h3>
 				%s
     </article><hr/>`
 )

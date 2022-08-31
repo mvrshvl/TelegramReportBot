@@ -81,7 +81,7 @@ func sendCallback(stack *stack.Stack, db *database.Database, api *telebot.Bot, c
 			Text:      text,
 			Media:     filepath,
 			Place:     query.Place,
-			From:      ctx.Message().Sender.Username,
+			From:      fmt.Sprintf("%s %s", ctx.Message().Sender.FirstName, ctx.Message().Sender.LastName),
 		})
 		if err != nil {
 			log.Println("save message error:", err)
