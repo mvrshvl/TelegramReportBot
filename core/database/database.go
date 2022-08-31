@@ -117,7 +117,7 @@ func (db *Database) Read(ctx context.Context, city string) ([]*Message, error) {
 func (db *Database) Insert(msg *Message) error {
 	db.mux.Lock()
 
-	query := "INSERT INTO MESSAGES (city, text, media, place, `from`, timestamp) VALUES (?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO messages (city, text, media, place, `from`, timestamp) VALUES (?, ?, ?, ?, ?, ?)"
 
 	_, err := db.connection.Exec(query, msg.City, msg.Text, msg.Media, msg.Place, msg.From, msg.Timestamp)
 	if err != nil {
